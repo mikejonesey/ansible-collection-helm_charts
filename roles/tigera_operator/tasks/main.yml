@@ -18,7 +18,7 @@
   kubernetes.core.helm:
     name: calico
     create_namespace: true
-    release_namespace: calico-system
+    release_namespace: tigera-operator
     chart_ref: projectcalico/tigera-operator
     chart_version: "v{{ helm_tigera_operator_chart_version }}"
     values: "{{ lookup('template', 'values.yml.j2') | from_yaml }}"
