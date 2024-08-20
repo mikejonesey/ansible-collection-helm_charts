@@ -1,0 +1,6 @@
+---
+- name: Install Tigera Operator
+  hosts: localhost
+  remote_user: root
+  roles:
+    - tigera_operator

@@ -1,0 +1,6 @@
+---
+- name: Test nfs provisioner
+  hosts: localhost
+  remote_user: root
+  roles:
+    - nfs_subdir_external_provisioner

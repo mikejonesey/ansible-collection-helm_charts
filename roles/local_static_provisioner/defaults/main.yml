@@ -1,0 +1,65 @@
+---
+# defaults file for local_static_provisioner
+
+##################################################
+# LVM Datasource
+##################################################
+
+helm_lsp_lvm_volumes: []
+
+##################################################
+# Bind FS Datasource
+##################################################
+
+helm_lsp_bind_volumes: []
+
+##################################################
+# Common Settings
+##################################################
+
+helm_lsp_common:
+  rbac: |
+    create: true
+    pspEnabled: false
+  serviceAccount: |
+    create: true
+    name: ""
+  useAlphaAPI: "false"
+  setPVOwnerRef: "false"
+  minResyncPeriod: "5m0s"
+  useJobForCleaning: "false"
+  useNodeNameOnly: "false"
+  mountDevVolume: "true"
+#  labelsForPV: |
+#    example: ok
+
+helm_lsp_classes:
+  - name: lvm-static
+    hostDir: /mnt/k8s-lvm
+    volumeMode: Block
+    fsType: ext4
+    namePattern: "*"
+    blockCleanerCommand:
+      - "/scripts/quick_reset.sh"
+      - "2"
+    storageClass: |
+      reclaimPolicy: Delete
+      isDefaultClass: false
+  - name: bind-static
+    hostDir: /mnt/k8s-static
+    volumeMode: Filesystem
+    fsType: ext4
+    namePattern: "*"
+    blockCleanerCommand:
+      - "/scripts/shred.sh"
+      - "2"
+    storageClass: |
+      reclaimPolicy: Delete
+      isDefaultClass: false
+
+helm_lsp_service_monitor: |
+  enabled: false
+  interval: 10s
+  namespace:
+  additionalLabels: {}
+  relabelings: []

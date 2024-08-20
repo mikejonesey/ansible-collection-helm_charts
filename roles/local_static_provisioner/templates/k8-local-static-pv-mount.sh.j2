@@ -1,0 +1,23 @@
+#!/bin/bash
+# Kubernetes Local Static PV mount script
+{% for lsp_storage in helm_lsp_classes %}
+# PV for Class: {{ lsp_storage.name }}
+{% for lsp_lvm in helm_lsp_lvm_volumes|dict2items %}
+{% if lsp_lvm.value.class == lsp_storage.name %}
+{% if lsp_storage.volumeMode == "Block" %}
+# Block mode LVM
+ln -s /dev/disk/by-uuid/{{ lsp_lvm.value.uuid }} {{ lsp_storage.hostDir }}/{{ lsp_lvm.value.uuid }}
+{% elif lsp_storage.volumeMode == "Filesystem" %}
+# Filesystem mode LVM
+mkdir -p {{ lsp_storage.hostDir }}/{{ lsp_lvm.value.uuid }}
+mount {{ lsp_storage.hostDir }}/{{ lsp_lvm.value.uuid }}
+{% endif %}
+{% endif %}
+{% endfor %}
+{% for lsp_bind in helm_lsp_bind_volumes %}
+{% if lsp_bind.class == lsp_storage.name %}
+mkdir -p {{ lsp_storage.hostDir }}/{{ lsp_bind.name }}
+mount {{ lsp_storage.hostDir }}/{{ lsp_bind.name }}
+{% endif %}
+{% endfor %}
+{% endfor %}

@@ -1,0 +1,6 @@
+---
+- name: Test Local Provisioner
+  hosts: localhost
+  remote_user: root
+  roles:
+    - local_static_provisioner

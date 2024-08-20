@@ -1,0 +1,53 @@
+---
+# tasks file for helm
+
+- name: Upload Helm Signing Key
+  become: true
+  become_user: root
+  ansible.builtin.copy:
+    src: helm-keyring.asc
+    dest: /usr/share/keyrings/helm-keyring.asc
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Add Helm Repo
+  become: true
+  become_user: root
+  ansible.builtin.lineinfile:
+    path: "/etc/apt/sources.list.d/helm.list"
+    line: 'deb [signed-by=/usr/share/keyrings/helm-keyring.asc] https://baltocdn.com/helm/stable/debian/ all main'
+    create: true
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Update apt-cache
+  become: true
+  become_user: root
+  ansible.builtin.apt:
+    update_cache: true
+
+- name: Install helm
+  become: true
+  become_user: root
+  ansible.builtin.apt:
+    name: "{{ packages }}"
+    state: present
+  vars:
+    packages:
+      - python3-yaml
+      - helm=3.10.2-1
+      - git
+
+- name: Install Helm diff plugin
+  kubernetes.core.helm_plugin:
+    plugin_path: https://github.com/databus23/helm-diff
+    state: present
+
+- name: Create directory for chart uploads
+  become: false
+  ansible.builtin.file:
+    path: "helm/custom_values"
+    state: directory
+    mode: "0755"

@@ -1,0 +1,17 @@
+ancestor: null
+releases:
+  1.0.0:
+    release_date: '2024-08-15'
+  1.0.3:
+    changes:
+      bugfixes:
+      - correct file permission values cache dir
+      minor_changes:
+      - cleanup, lint, and limit packaging for public release for use with mikejonesey.kubernetes
+      - make tigera operator more flexible and update default version
+      release_summary: 'Update tigera operator default version
+
+        '
+    fragments:
+    - release.yaml
+    release_date: '2024-08-20'

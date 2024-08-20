@@ -1,0 +1,9 @@
+---
+# defaults file for tigera-operator
+
+# v3.24.5 = k8s v1.22 - v1.25
+# v3.27.0 = k8s v1.24 - v1.28
+# v3.28.0 = k8s v1.27 - v1.30
+helm_tigera_operator_chart_version: 3.28.0
+
+helm_tigera_operator_values_override: {}

@@ -1,0 +1,45 @@
+---
+# defaults file for nfs-subdir-external-provisioner
+helm_nfs_provisioner_chart_version: "4.0.18"
+
+helm_nfssubdir_instances:
+
+  - name: nfs-subdir-external-provisioner
+    helm_nfssubdir_nfs: |
+      server: k8s-nfs
+      path: /srv/nfs/nfs-auto
+      mountOptions:
+      volumeName: nfs-subdir-external-provisioner-root
+      reclaimPolicy: Retain
+    helm_nfssubdir_storageClass: |
+      create: true
+      provisionerName: nfs-auto
+      defaultClass: true
+      name: nfs-auto
+      allowVolumeExpansion: true
+      reclaimPolicy: Retain
+      archiveOnDelete: true
+      onDelete: delete
+      pathPattern:
+      accessModes: ReadWriteOnce
+      annotations: {}
+
+  - name: nfs-subdir-external-path
+    helm_nfssubdir_nfs: |
+      server: k8s-nfs
+      path: /srv/nfs/nfs-path
+      mountOptions:
+      volumeName: nfs-subdir-external-provisioner-path
+      reclaimPolicy: Retain
+    helm_nfssubdir_storageClass: |
+      create: true
+      provisionerName: nfs-path
+      defaultClass: false
+      name: nfs-path
+      allowVolumeExpansion: true
+      reclaimPolicy: Delete
+      archiveOnDelete: true
+      onDelete: delete
+      pathPattern: "${.PVC.annotations.nfs.io/storage-path}"
+      accessModes: ReadWriteMany
+      annotations: {}

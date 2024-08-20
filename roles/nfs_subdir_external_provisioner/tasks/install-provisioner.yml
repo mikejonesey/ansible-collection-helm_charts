@@ -1,0 +1,16 @@
+- name: Template custom values
+  ansible.builtin.template:
+    src: values.yml.j2
+    dest: "helm/custom_values/values-{{ nfs_provisioner.name | trim | regex_replace(' ', '-') }}.yml"
+    mode: "0644"
+
+- name: Deploy NFS Provisioner
+  kubernetes.core.helm:
+    name: "{{ nfs_provisioner.name }}"
+    create_namespace: true
+    release_namespace: default
+    chart_ref: nfs-subdir-external-provisioner/nfs-subdir-external-provisioner
+    chart_version: "{{ helm_nfs_provisioner_chart_version }}"
+    # values: "{{ lookup('template', 'values.yml.j2') | from_yaml }}"
+    values_files:
+      - "helm/custom_values/values-{{ nfs_provisioner.name | trim | regex_replace(' ', '-') }}.yml"

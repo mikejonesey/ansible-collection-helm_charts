@@ -1,0 +1,41 @@
+---
+
+- name: Debug
+  ansible.builtin.debug:
+    msg: "{{ lvm_volume }}"
+
+- name: Fail when VG does not exist
+  ansible.builtin.fail:
+    msg: "This role does not setup your PV or VG, only LVM volumes..., please setup PV / VG seperatley {{ lvm_volume.value.volume_group }}"
+  when: "ansible_lvm['vgs'][lvm_volume.value.volume_group] is not defined"
+
+- name: Create LVM volume when VG exists, but LV does not
+  become: true
+  community.general.lvol:
+    vg: "{{ lvm_volume.value.volume_group }}"
+    lv: "{{ lvm_volume.key }}"
+    size: "{{ lvm_volume.value.size }}"
+  when: >
+    ansible_lvm['vgs'][lvm_volume.value.volume_group] is defined and
+    ansible_lvm['lvs'][lvm_volume.key] is not defined
+  register: create_lvm
+
+- name: Create Filesystem on LVM Volume
+  become: true
+  community.general.filesystem:
+    fstype: ext4
+    dev: "/dev/{{ lvm_volume.value.volume_group }}/{{ lvm_volume.key }}"
+  when: create_lvm.changed # noqa: no-handler
+
+- name: Get UUID of current lvm volume
+  become: true
+  ansible.builtin.shell: |
+    /usr/sbin/blkid -s UUID -o value "/dev/{{ lvm_volume.value.volume_group }}/{{ lvm_volume.key }}"
+  register: fetch_uuid
+  changed_when: false
+
+- name: Merge uuid into lookup table
+  ansible.builtin.set_fact:
+    helm_lsp_lvm_volumes: "{{ helm_lsp_lvm_volumes | combine(new_uuid, recursive=true) }}"
+  vars:
+    new_uuid: "{ '{{ lvm_volume.key }}': { 'uuid': '{{ fetch_uuid.stdout }}' } }"

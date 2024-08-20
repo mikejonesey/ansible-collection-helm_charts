@@ -1,0 +1,119 @@
+---
+# tasks file for local_static_provisioner
+
+# - name: debug
+#   delegate_to: localhost
+#   template:
+#     src: values.yml.j2
+#     dest: values-local-static-provisioner.yml
+
+# - name: pause
+#   pause:
+
+- name: Setup top level mount dir
+  become: true
+  become_user: root
+  ansible.builtin.file:
+    path: /mnt/k8s/local_static_provisioner
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Setup LVM Volumes
+  ansible.builtin.include_tasks: setup_lvm_volumes.yml
+  with_items: "{{ helm_lsp_lvm_volumes | dict2items }}"
+  loop_control:
+    loop_var: lvm_volume
+
+- name: Setup Bind Volumes
+  ansible.builtin.include_tasks: setup_bind_volumes.yml
+  with_items: "{{ helm_lsp_bind_volumes }}"
+  loop_control:
+    loop_var: bind_volume
+
+- name: Print out LVM
+  ansible.builtin.debug:
+    msg: "{{ helm_lsp_lvm_volumes }}"
+
+- name: Add mappings to /etc/fstab
+  become: true
+  ansible.builtin.blockinfile:
+    path: /etc/fstab
+    block: |
+      # Kubernetes Local Static PV
+      {% for lsp_storage in helm_lsp_classes %}
+      # PV for Class: {{ lsp_storage.name }}
+      {% for lsp_lvm in helm_lsp_lvm_volumes|dict2items %}
+      {% if lsp_lvm.value.class == lsp_storage.name %}
+      {% if lsp_storage.volumeMode == "Block" %}
+      # Block mode should not be pre-mounted
+      #/dev/{{ lsp_lvm.value.volume_group }}/{{ lsp_lvm.key }} {{ lsp_storage.hostDir }}/{{ lsp_lvm.value.uuid }} ext4 defaults,noatime 0 0
+      {% elif lsp_storage.volumeMode == "Filesystem" %}
+      /dev/{{ lsp_lvm.value.volume_group }}/{{ lsp_lvm.key }} {{ lsp_storage.hostDir }}/{{ lsp_lvm.value.uuid }} ext4 defaults,noatime 0 0
+      {% endif %}
+      {% endif %}
+      {% endfor %}
+      {% for lsp_bind in helm_lsp_bind_volumes %}
+      {% if lsp_bind.class == lsp_storage.name %}
+      {{ lsp_bind.source }} {{ lsp_storage.hostDir }}/{{ lsp_bind.name }} none defaults,bind 0 0
+      {% endif %}
+      {% endfor %}
+      {% endfor %}
+    marker: "# {mark} ANSIBLE MANAGED BLOCK Local Static Provisioner"
+
+- name: Provide a mount script for the PVs
+  become: true
+  ansible.builtin.template:
+    src: k8-local-static-pv-mount.sh.j2
+    dest: /root/k8-local-static-pv-mount.sh
+    mode: "0700"
+
+- name: Mount new lvm volumes
+  become: true
+  ansible.builtin.command: /root/k8-local-static-pv-mount.sh
+  changed_when: true
+
+- name: Create Directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: '0755'
+  with_items:
+    - helm/custom_values
+    - helm/local_static_provisioner
+    - helm/local_static_provisioner/templates
+
+- name: Upload Files
+  ansible.builtin.copy:
+    src: "{{ item }}"
+    dest: "helm/{{ item }}"
+    mode: "0644"
+  with_items:
+    - local_static_provisioner/templates/NOTES.txt
+    - local_static_provisioner/templates/daemonset.yaml
+    - local_static_provisioner/templates/psp.yaml
+    - local_static_provisioner/templates/storageclass.yaml
+    - local_static_provisioner/templates/servicemonitor.yaml
+    - local_static_provisioner/templates/configmap.yaml
+    - local_static_provisioner/templates/serviceaccount.yaml
+    - local_static_provisioner/templates/rbac.yaml
+    - local_static_provisioner/templates/_helpers.tpl
+    - local_static_provisioner/Chart.yaml
+    - local_static_provisioner/values.yaml
+
+- name: Template custom values
+  ansible.builtin.template:
+    src: values.yml.j2
+    dest: helm/custom_values/values-local-static-provisioner.yml
+    mode: "0644"
+
+- name: Deploy Local Static Provisioner
+  kubernetes.core.helm:
+    name: local-static-provisioner
+    create_namespace: true
+    release_namespace: default
+    chart_ref: ./helm/local_static_provisioner
+    # values: "{{ lookup('template', 'values.yml.j2') | from_yaml }}"
+    values_files:
+      - "helm/custom_values/values-local-static-provisioner.yml"

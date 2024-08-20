@@ -1,0 +1,14 @@
+exclude_paths:
+  - .gitlab-ci.yml
+  - changelogs/changelog.yaml
+  - playbooks/install_charts.yml
+  - playbooks/install_charts_test.yml
+  - roles/fluentbit**
+  - roles/gitlab_runner**
+  - roles/graylog**
+  - roles/haproxy_ingress**
+  - roles/harbor**
+  - roles/jenkins**
+  - roles/kube_prometheus_stack**
+  - roles/sonarqube**
+  - roles/zabbix_helm_chrt**

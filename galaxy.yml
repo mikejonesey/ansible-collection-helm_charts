@@ -1,0 +1,30 @@
+---
+namespace: mikejonesey
+name: helm_charts
+version: 1.0.4
+readme: README.md
+authors:
+  - Michael Jones <mj@mikejonesey.co.uk>
+description: Install Helm Charts
+license:
+  - GPL-2.0-or-later
+tags: ['helm', 'kubernetes', 'application', 'infrastructure', 'linux', 'tools']
+dependencies: {}
+repository: https://github.com/mikejonesey/ansible-collection-helm_charts
+documentation: https://github.com/mikejonesey/ansible-collection-helm_charts/blob/main/README.md
+homepage: https://github.com/mikejonesey/ansible-collection-helm_charts
+issues: https://github.com/mikejonesey/ansible-collection-helm_charts/issues
+build_ignore:
+  - '.gitlab-ci.yml'
+  - 'changelogs/*'
+  - 'playbooks/install_charts.yml'
+  - 'playbooks/install_charts_test.yml'
+  - 'roles/fluentbit**'
+  - 'roles/gitlab_runner**'
+  - 'roles/graylog**'
+  - 'roles/haproxy_ingress**'
+  - 'roles/harbor**'
+  - 'roles/jenkins**'
+  - 'roles/kube_prometheus_stack**'
+  - 'roles/sonarqube**'
+  - 'roles/zabbix_helm_chrt**'

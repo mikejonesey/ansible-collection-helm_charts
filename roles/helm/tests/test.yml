@@ -1,0 +1,6 @@
+---
+- name: Test Helm Install
+  hosts: localhost
+  remote_user: root
+  roles:
+    - helm
